@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, StatusBar, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, Text, View, SafeAreaView, StatusBar, TouchableOpacity, FlatList, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'
 import TaskList from './src/components/TaskList'
 import * as Animatable from 'react-native-animatable'
+import { useFonts } from 'expo-font'
 
 const AnimatedBtn = Animatable.createAnimatableComponent(TouchableOpacity)
 
@@ -14,6 +15,29 @@ export default function App() {
     {key: 3, task: 'Estudar React Native'},
     {key: 4, task: 'Comprar presente Bruna'}
   ])
+
+  const [open, setOpen] = useState(false)
+  const [input, setInput] = useState('')
+
+
+  function addTask() {
+    if (input === '') return
+
+    const data = {
+      key: input,
+      task: input
+    }
+
+    setTask([...task, data])
+    setOpen(false)
+    setInput('')
+  }
+
+  const handleDelete = useCallback((data) => {
+    const find = task.filter(r => r.key !== data.key)
+
+    setTask(find)
+  })
 
   return (
     <SafeAreaView style={styles.container}>
@@ -28,14 +52,44 @@ export default function App() {
         showsHorizontalScrollIndicator={false}
         data={task}
         keyExtractor={ (item) => String(item.key)}
-        renderItem={ ({item}) => <TaskList data={item} /> }
+        renderItem={ ({item}) => <TaskList data={item} handleDelete={handleDelete} /> }
       />
+
+      <Modal animation="slider" transparent={false} visible={open}>
+        <SafeAreaView style={styles.modal}>
+
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={ () => setOpen(false) }>
+              <Ionicons style={{marginLeft: 5, marginRight: 5}} name="md-arrow-back" size={40} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Nova Tarefa</Text>
+          </View>
+
+          <Animatable.View style={styles.modalBody} animation="fadeInUp" useNativeDriver>
+            <TextInput
+            placeholder="O que tem que fazer hoje?"
+            style={styles.input}
+            multiline={true}
+            autoCorrect={false}
+            placeholderTextColor="#747474"
+            value={input}
+            onChangeText={ (texto) => setInput(texto)}
+            />
+
+            <TouchableOpacity style={styles.handleAdd} onPress={ addTask }>
+              <Text style={styles.handleAddText}>Cadastrar</Text>
+            </TouchableOpacity>
+          </Animatable.View>
+
+        </SafeAreaView>
+      </Modal>
 
       <AnimatedBtn
       style={styles.fab}
       animation="bounceIn"
       useNativeDriver
       duration={1500}
+      onPress={ () => setOpen(true) }
       >
         <Ionicons name="ios-add" color="#fff" size={35} />
       </AnimatedBtn>
@@ -48,6 +102,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#171d31',
+    fontFamily: 'monospace'
   },
   title: {
     marginTop: 30,
@@ -74,5 +129,48 @@ const styles = StyleSheet.create({
       width: 1,
       height: 3
     }
+  },
+  modal: {
+    flex: 1,
+    backgroundColor: '#171d31',
+  },
+  modalHeader: {
+    marginLeft: 10,
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  modalTitle: {
+    marginLeft: 15,
+    fontSize: 24,
+    color: '#FFF'
+  },
+  modalBody: {
+    marginTop: 15,
+  },
+  input: {
+    fontSize: 15,
+    marginLeft: 10,
+    marginRight: 10,
+    marginTop: 30,
+    backgroundColor: '#FFF',
+    padding: 9,
+    height: 85,
+    textAlignVertical: 'top',
+    color: '#000',
+    borderRadius: 5
+  },
+  handleAddText: {    
+    fontSize: 20,
+  },
+  handleAdd: {
+    backgroundColor: '#FFF',
+    marginTop: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+    marginRight: 10,
+    height: 40,
+    borderRadius: 5
   }
 });
